@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Artisans Hub</title>
+<style>
+body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; }
+header { background: #6c63ff; color: white; text-align: center; padding: 15px; font-size: 24px; }
+.box { width: 350px; background: white; padding: 20px; margin: 20px auto; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1);}
+input, textarea, select, button { width: 100%; margin: 10px 0; padding: 10px; border-radius: 6px; border: 1px solid #ccc; }
+button { background: #6c63ff; color: white; border: none; cursor: pointer; }
+button:hover { background: #5348d6; }
+.switch-link { text-align: center; color: #6c63ff; cursor: pointer; font-size: 14px; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 15px; padding: 20px; max-width: 900px; margin: auto; }
+.item { background: white; border: 1px solid #ddd; border-radius: 10px; overflow: hidden; text-align: center; padding: 10px; }
+.item img { width: 100%; height: 150px; object-fit: cover; }
+.buy-btn { background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+.buy-btn:hover { background: #218838; }
+.feedback { font-size: 14px; color: #555; }
+#dashboard { display: none; }
+@media(max-width:500px){ .box { width:90%; } }
+</style>
+</head>
+<body>
+<header>Artisans Hub</header>
+
+<!-- Authentication Box -->
+<div class="box" id="authBox">
+  <h2>Login / Register</h2>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+  <select id="role">
+    <option value="artist">Artist</option>
+    <option value="buyer">Buyer</option>
+  </select>
+  <button onclick="login()">Login</button>
+  <button onclick="register()">Register</button>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard">
+  <div class="box" id="uploadSection" style="display:none;">
+    <h2>Upload Your Artwork</h2>
+    <input type="text" id="title" placeholder="Title">
+    <textarea id="description" placeholder="Description"></textarea>
+    <input type="number" id="price" placeholder="Price in ₹">
+    <input type="file" id="image">
+    <button onclick="uploadWork()">Upload</button>
+  </div>
+
+  <h2 style="text-align:center;">Available Artworks</h2>
+  <div class="gallery" id="galleryItems"></div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+<script src="https://js.stripe.com/v3/"></script>
+
+<script>
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
+const functions = firebase.functions();
+
+// Authentication
+function register() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const role = document.getElementById("role").value;
+  if(!email||!password){ alert("Enter email & password"); return; }
+  auth.createUserWithEmailAndPassword(email,password).then((userCredential)=>{
+    const user = userCredential.user;
+    db.collection("users").doc(user.uid).set({role: role});
+    alert("Registered as "+role.toUpperCase());
+    showDashboard(role);
+  }).catch(err=>alert(err.message));
+}
+
+function login(){
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  if(!email||!password){ alert("Enter email & password"); return; }
+  auth.signInWithEmailAndPassword(email,password).then((userCredential)=>{
+    const user = userCredential.user;
+    db.collection("users").doc(user.uid).get().then(doc=>{
+      const role = doc.data().role;
+      alert(role.toUpperCase() + " logged in!");
+      showDashboard(role);
+    });
+  }).catch(err=>alert(err.message));
+}
+
+// Show dashboard
+function showDashboard(role){
+  document.getElementById("authBox").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  if(role==="artist"){ document.getElementById("uploadSection").style.display="block"; }
+  loadGallery();
+}
+
+// Upload Artwork
+function uploadWork(){
+  const title=document.getElementById("title").value;
+  const desc=document.getElementById("description").value;
+  const price=document.getElementById("price").value;
+  const imageFile=document.getElementById("image").files[0];
+  if(!title||!desc||!price||!imageFile){ alert("Fill all fields"); return; }
+
+  const storageRef=storage.ref("artworks/"+Date.now()+"_"+imageFile.name);
+  storageRef.put(imageFile).then(snapshot=>{
+    snapshot.ref.getDownloadURL().then(url=>{
+      db.collection("artworks").add({
+        title:title,
+        description:desc,
+        price:price,
+        image:url,
+        feedbacks:[]
+      }).then(()=>{ 
+        alert("Artwork uploaded!"); 
+        document.getElementById("title").value="";
+        document.getElementById("description").value="";
+        document.getElementById("price").value="";
+        document.getElementById("image").value="";
+        loadGallery();
+      });
+    });
+  });
+}
+
+// Load Gallery
+function loadGallery(){
+  const gallery = document.getElementById("galleryItems");
+  gallery.innerHTML="";
+  db.collection("artworks").get().then(snapshot=>{
+    snapshot.forEach(doc=>{
+      const data = doc.data();
+      const div = document.createElement("div");
+      div.className="item";
+      div.innerHTML=`
+        <img src="${data.image}">
+        <h3>${data.title}</h3>
+        <p>${data.description}</p>
+        <p><strong>Price: ₹${data.price}</strong></p>
+        <button class="buy-btn" onclick="buyArt('${doc.id}','${data.title}','${data.price}')">Buy Now</button>
+        <div class="feedback"><strong>Feedbacks:</strong><ul>${data.feedbacks.map(f=>`<li>${f}</li>`).join('')}</ul></div>
+        <input type="text" id="feedback_${doc.id}" placeholder="Add feedback">
+        <button onclick="addFeedback('${doc.id}')">Submit Feedback</button>
+      `;
+      gallery.appendChild(div);
+    });
+  });
+}
+
+// Add feedback
+function addFeedback(id){
+  const fb = document.getElementById("feedback_"+id).value;
+  if(!fb){ alert("Enter feedback"); return; }
+  const ref = db.collection("artworks").doc(id);
+  ref.update({feedbacks: firebase.firestore.FieldValue.arrayUnion(fb)}).then(()=>{
+    document.getElementById("feedback_"+id).value="";
+    loadGallery();
+  });
+}
+
+// Stripe Payment
+async function buyArt(id,title,price){
+  try{
+    const createCheckoutSession = functions.httpsCallable('createCheckoutSession');
+    const session = await createCheckoutSession({title:title, price:price});
+    const stripe = Stripe('YOUR_STRIPE_PUBLISHABLE_KEY'); // replace
+    stripe.redirectToCheckout({sessionId: session.data.id});
+  }catch(err){ alert(err.message); }
+}
+</script>
+</body>
+</html>
