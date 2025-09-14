@@ -1,4 +1,21 @@
-// Firebase Config
+document.addEventListener("DOMContentLoaded", function() {
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDnVuu-TCC83Ea1x2ZWokgKBoROgxNwNk8",
+        authDomain: "artisans-hub-a1cca.firebaseapp.com",
+        projectId: "artisans-hub-a1cca",
+        storageBucket: "artisans-hub-a1cca.firebasestorage.app",
+        messagingSenderId: "83933443892",
+        appId: "1:83933443892:web:92fdf521c1ef5ff38f9761"
+    };
+
+    // Firebase initialize karo
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // 🔥 Yahan tumhara baaki ka code paste karo 🔥
+  // Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyDnVuu-TCC83Ea1x2ZWokgKBoROgxNwNk8",
   authDomain: "artisans-hub-a1cca.firebaseapp.com",
@@ -53,3 +70,16 @@ if (form) {
         });
     });
 }
+
+    // Example: login function
+    function login() {
+        // code here
+    }
+
+    // Example: add artwork
+    function addArtwork() {
+        // code here
+    }
+
+    // Tumhare events, forms, etc.
+});
