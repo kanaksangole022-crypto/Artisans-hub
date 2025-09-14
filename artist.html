@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artist Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Artist Dashboard</h1>
+    <form id="uploadForm">
+        <input type="text" id="title" placeholder="Artwork Title" required><br>
+        <input type="text" id="imageUrl" placeholder="Artwork Image URL" required><br>
+        <button type="submit">Add Artwork</button>
+    </form>
+
+    <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-firestore.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
