@@ -7,13 +7,16 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Artist Dashboard</h1>
-    <form id="uploadForm">
-        <input type="text" id="title" placeholder="Artwork Title" required><br>
-        <input type="text" id="imageUrl" placeholder="Artwork Image URL" required><br>
-        <button type="submit">Add Artwork</button>
-    </form>
-
+    <h2>Artist Dashboard</h2>
+<form id="artwork-form">
+    <input type="text" id="artwork-name" placeholder="Artwork Name" required><br><br>
+    <textarea id="artwork-description" placeholder="Description" rows="4" required></textarea><br><br>
+    <input type="number" id="artwork-price" placeholder="Price in ₹" required><br><br>
+    <input type="file" id="artwork-image" accept="image/*" required><br><br>
+    <textarea id="artwork-feedback" placeholder="Feedback (optional)" rows="2"></textarea><br><br>
+    <button type="submit">Upload</button>
+</form>
+<div id="message"></div>
     <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-firestore.js"></script>
